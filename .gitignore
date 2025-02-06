@@ -1,0 +1,24 @@
+# Archivos de IntelliJ / Eclipse / VSCode
+.idea/
+*.iml
+*.vscode/
+.classpath
+.project
+.settings/
+
+# Archivos de compilación
+target/
+bin/
+out/
+
+# Dependencias descargadas
+*.jar
+*.war
+
+# Configuraciones del sistema
+*.log
+.env
+
+# Archivos de Maven o Gradle
+.mvn/
+.gradle/
