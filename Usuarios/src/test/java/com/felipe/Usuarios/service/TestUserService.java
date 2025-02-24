@@ -8,9 +8,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,6 +23,9 @@ public class TestUserService {
 
   @Mock
   private IUserRepository iUserRepository;
+
+  @Mock
+  private PasswordEncoder passwordEncoder;
 
   @InjectMocks
   private UserServiceImpl iUserService;
@@ -82,5 +87,47 @@ public class TestUserService {
     assertEquals(2, result.size());
     assertEquals("John", result.get(0).getFirstName());
     assertEquals("Jane", result.get(1).getFirstName());
+  }
+
+  @Test
+  void testGetUserById() {
+    // Simulamos la respuesta del repositorio
+    when(iUserRepository.findById(1L)).thenReturn(Optional.of(user1));
+
+    // Ejecutamos el método del servicio
+    User result = iUserService.getUserById(1L);
+
+    // Verificaciones
+    verify(iUserRepository).findById(1L);
+    assertNotNull(result);
+    assertEquals("John", result.getFirstName());
+  }
+
+  @Test
+  void testCreateUser() {
+
+    //Simulación de la encriptación de la contraseña
+    String encodedPassword = "$2a$10$encryptedpassword";
+    when(passwordEncoder.encode(user1.getPassword())).thenReturn(encodedPassword);
+
+    // Simulación del guardado del usuario en el repositorio
+    when(iUserRepository.save(any(User.class))).thenAnswer(invocation -> {
+      User savedUser = invocation.getArgument(0);
+      savedUser.setUserId(1L); // Simula que la BD le asigna un ID
+      return savedUser;
+    });
+
+    // Ejecutamos el método del servicio
+    User createdUser = iUserService.createUser(user1);
+
+    // Verificaciones
+    verify(passwordEncoder, times(1)).encode("password123");
+    verify(iUserRepository, times(1)).save(any(User.class));
+
+    assertNotNull(createdUser);
+    assertEquals(1L, createdUser.getUserId());
+    assertEquals("John", createdUser.getFirstName());
+    assertEquals("0dJ3l@example.com", createdUser.getEmail());
+    assertEquals(encodedPassword, createdUser.getPassword());
   }
 }
